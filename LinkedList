@@ -1,0 +1,295 @@
+#pragma once
+
+#ifndef LINKEDLIST_H
+#define LINKEDLIST_H
+
+#include <iostream>
+using namespace std;
+
+template<class T>
+class LinkedListNode;
+
+template<class T>
+class LinkedList;
+
+//pass
+template<class T>
+class LinkedListNode
+{
+	friend class LinkedList<T>;
+	template<class T>
+	friend ostream & operator<<(ostream & output, const LinkedListNode<T> & node)
+	{
+		output << node.data;
+		return output;
+	}
+public:
+	LinkedListNode(const T & data)
+	{
+		this->data = data;
+		next = nullptr;
+	}
+	LinkedListNode(T && data) { this->data = data; next = nullptr; }
+	//��������pass ֻ��������
+	LinkedListNode(const LinkedListNode<T> & node) { data = node.data; }
+	//��������pass ֻ��������
+	LinkedListNode(LinkedListNode<T> && node) { data = node.data; }
+	LinkedListNode() {}
+	//��ֵpass ��ȫ���ƽ���
+	LinkedListNode<T> & operator=(const LinkedListNode<T> & node)
+	{
+		data = node.data;
+		next = node.next;
+		return *this;
+	}
+	//��ֵpass ��ȫ���ƽ���
+	LinkedListNode<T> & operator=(LinkedListNode<T> && node)
+	{
+		data = node.data;
+		next = node.next;
+		return *this;
+	}
+	//const T & Data() const { return data; }
+	LinkedListNode<T> *Next() const { return next; }
+	~LinkedListNode()
+	{
+		data.~T();
+		next = nullptr;
+	}
+private:
+	T data;
+	LinkedListNode *next;
+};
+
+template<class T>
+class LinkedList
+{
+	template<class T>
+	friend ostream & operator<<(ostream & output, const LinkedList<T> & list)
+	{
+		//pass
+		LinkedListNode<T> *temp = list.first;
+		while (temp)
+		{
+			output << *temp << "\t";
+			temp = temp->Next();
+		}
+		return output;
+	}
+public:
+	class Iterator
+	{
+	public:
+		Iterator(const LinkedList<T> & list) { ptr = list.first; }
+		Iterator(LinkedList<T> && list) { ptr = list.first; }
+		Iterator(const Iterator & itr) { ptr = itr.ptr; }
+		Iterator(Iterator && itr) { ptr = itr.ptr; }
+		Iterator & operator=(const Iterator & itr)
+		{
+			ptr = itr.ptr;
+			return *this;
+		}
+		Iterator & operator=(Iterator && itr)
+		{
+			ptr = itr.ptr;
+			return *this;
+		}
+		T & operator*() const { return ptr->data; }
+		T * operator->() const { return &ptr->data; }
+		bool operator==(LinkedListNode<T> *node)
+		{
+			if (ptr == node)
+				return true;
+			else
+				return false;
+		}
+		bool operator!=(LinkedListNode<T> *node)
+		{
+			return !(*this == node);
+		}
+		//ǰ׺����
+		Iterator & operator++()
+		{
+			ptr = ptr->next;
+			return *this;
+		}
+		//��׺����
+		Iterator & operator++(int)
+		{
+			Iterator *old = new Iterator(*this);
+			ptr = ptr->next;
+			return *old;
+		}
+	private:
+		LinkedListNode<T> *ptr;
+	};
+public:
+	LinkedList() { first = nullptr; length = 0; }
+	LinkedList(LinkedListNode<T> *pNode) { first = new LinkedListNode<T>(*pNode); length = 1; }
+	LinkedList(const LinkedListNode<T> &node) { first = new LinkedListNode<T>(node); length = 1; }
+	LinkedList(LinkedListNode<T> && node) { first = new LinkedListNode<T>(node); length = 1; }
+	LinkedList(const T & data) { first = new LinkedListNode(data); length = 1; }
+	//�������캯��pass
+	LinkedList(const LinkedList<T> & list)
+	{
+		if (list.first)
+		{
+			first = new LinkedListNode<T>(*list.first);
+			LinkedListNode<T> *temp = list.first;
+			while (temp->next)
+			{
+				this->push(*temp->next);
+				temp = temp->next;
+			}
+		}
+		length = list.length;
+	}
+	//�������캯��pass
+	LinkedList(LinkedList<T> && list)
+	{
+		if (list.first)
+		{
+			first = new LinkedListNode<T>(*list.first);
+			LinkedListNode<T> *temp = list.first;
+			while (temp->next)
+			{
+				this->push(*temp->next);
+				temp = temp->next;
+			}
+		}
+		length = list.length;
+	}
+	//��ֵ���غ���pass
+	LinkedList<T> & operator=(const LinkedList<T> & list)
+	{
+		if (list.first)
+		{
+			first = new LinkedListNode<T>(*list.first);
+			LinkedListNode<T> *temp = list.first;
+			while (temp->next)
+			{
+				this->push(*temp->next);
+				temp = temp->next;
+			}
+		}
+		length = list.length;
+		return *this;
+	}
+	//��ֵ���غ���pass
+	LinkedList<T> & operator=(LinkedList<T> && list)
+	{
+		if (list.first)
+		{
+			first = new LinkedListNode<T>(*list.first);
+			LinkedListNode<T> *temp = list.first;
+			while (temp->next)
+			{
+				this->push(*temp->next);
+				temp = temp->next;
+			}
+		}
+		length = list.length;
+		return *this;
+	}
+	//���ӽ��㵽ĩ��pass
+	void push(const LinkedListNode<T> & node)
+	{
+		if (first)
+		{
+			LinkedListNode<T> *temp = first;
+			while (temp->next)
+				temp = temp->next;
+			temp->next = new LinkedListNode<T>(node);
+		}
+		else
+			first = new LinkedListNode<T>(node);
+		length++;
+	}
+	//����ָ������pass
+	void insert(const int & index, const T & data)
+	{
+		if (index >= length)
+		{
+			LinkedListNode<T> *temp = new LinkedListNode<T>(data);
+			this->push(*temp);
+		}
+		else
+		{
+			if (index == 0)
+			{
+				LinkedListNode<T> *temp = new LinkedListNode<T>(data);
+				temp->next = first;
+				first = temp;
+			}
+			else
+			{
+				int count = index - 1;
+				LinkedListNode<T> *temp = first;
+				while (count > 0)
+				{
+					temp = temp->next;
+					count--;
+				}
+				LinkedListNode<T> *holder = new LinkedListNode<T>(data);
+				holder->next = temp->next;
+				temp->next = holder;
+			}
+			length++;
+		}
+	}
+	int Length() const { return length; }
+	//ɾ��ָ������pass
+	void del(const T & data)
+	{
+		try {
+			if (first)
+			{
+				if (first->data == data)
+				{
+					LinkedListNode<T> *temp = first;
+					first = first->next;
+					temp->~LinkedListNode();
+				}
+				else
+				{
+					LinkedListNode<T> *temp = first;
+					while (temp->next)
+					{
+						if (temp->next->data == data)
+						{
+							LinkedListNode<T> *n = temp->next;
+							temp->next = n->next;
+							n->~LinkedListNode();
+							break;
+						}
+						temp = temp->next;
+					}
+				}
+				length--;
+			}
+			else
+			{
+				throw runtime_error("Cannot delete from an empty list.");
+			}
+		}
+		catch (exception & e) {
+			cout << e.what() << endl;
+		}
+	}
+	~LinkedList()
+	{
+		while (first)
+		{
+			LinkedListNode<T> *ptr = first;
+			first = first->next;
+			ptr->~LinkedListNode();
+		}
+		clear87();
+	}
+	LinkedListNode<T> * end() { return nullptr; }
+private:
+	LinkedListNode<T> *first;
+	int length;
+};
+
+#endif // !LINKEDLIST_H
