@@ -1,0 +1,182 @@
+#pragma once
+
+#ifndef CIRCLELIST_H
+#define CIRCLELIST_H
+
+#include<iostream>
+using namespace std;
+
+template<class T>
+class CircleListNode;
+
+template<class T>
+class CircleList;
+
+template<class T>
+class CircleListNode
+{
+	friend class CircleList<T>;
+	template<class T>
+	friend ostream & operator<<(ostream & output, const CircleListNode<T> & node)
+	{
+		output << node.data;
+		return output;
+	}
+public:
+	CircleListNode() { next = nullptr; }
+	CircleListNode(const T & data) { this->data = data; next = nullptr; }
+	CircleListNode(T && data) { this->data = data; next = nullptr; }
+	//�������� ֻ����ֵ
+	CircleListNode(const CircleListNode<T> & node) { data = node.data; next = nullptr; }
+	CircleListNode(CircleListNode<T> && node) { data = node.data; next = nullptr; }
+	//��ֵ���� ��ȫ����
+	CircleListNode<T> & operator=(const CircleListNode<T> & node)
+	{
+		data = node.data;
+		next = node.next;
+		return *this;
+	}
+	CircleListNode<T> & operator=(CircleListNode<T> && node)
+	{
+		data = node.data;
+		next = node.next;
+		return *this;
+	}
+	~CircleListNode()
+	{
+		data.~T();
+		next = nullptr;
+	}
+	bool operator==(const CircleListNode<T> & node) { return data == node.data; }
+	bool operator==(CircleListNode<T> && node) { return data == node.data; }
+	bool operator!=(const CircleListNode<T> & node) { return data != node.data; }
+	bool operator!=(CircleListNode<T> && node) { return data != node.data; }
+	CircleListNode<T> *Next() { return next; }
+private:
+	T data;
+	CircleListNode<T> *next;
+};
+
+template<class T>
+class CircleList
+{
+	template<class T>
+	friend ostream & operator<<(ostream & output, const CircleList<T> & list)
+	{
+		CircleListNode<T> *temp = list.last;
+		temp = temp->Next();
+		while (temp != list.last)
+		{
+			output << *temp << "\t";
+			temp = temp->Next();
+		}
+		output << *temp;
+		return output;
+	}
+public:
+	CircleList() { last = nullptr; length = 0; }
+	CircleList(CircleListNode<T> *node) { last = new CircleListNode<T>(*node); last->next = last; length = 1; }
+	CircleList(const CircleListNode<T> & node) { last = new CircleListNode<T>(node); last->next = last; length = 1; }
+	CircleList(CircleListNode<T> && node) { last = new CircleListNode<T>(node); last->next = last; length = 1; }
+	CircleList(const T & data) { last = new CircleList<T>(data); last->next = last; length = 1; }
+	~CircleList()
+	{
+		while (last)
+		{
+			CircleListNode<T> *temp = last;
+			last = last->next;
+			temp->~CircleListNode();
+		}
+		clear87();
+	}
+	void insert(const int & index, const T & data)
+	{
+		if (last)
+		{
+			if (index >= length)
+			{
+				CircleListNode<T> *temp = last->next;
+				last->next = new CircleListNode<T>(data);
+				last->next->next = temp;
+				last = last->next;
+			}
+			else
+			{
+				int count = index;
+				CircleListNode<T> *temp = last;
+				while (count)
+				{
+					count--;
+					last = last->next;
+				}
+				CircleListNode<T> *holder = temp->next;
+				temp->next = new CircleListNode<T>(data);
+				temp->next->next = holder;
+			}
+		}
+		else
+		{
+			last = new CircleListNode<T>(data);
+			last->next = last;
+		}
+		length++;
+	}
+	void del(const T & data)
+	{
+		try {
+			if (last)
+			{
+				if (length == 1)
+				{
+					if (last->data == data)
+					{
+						last->~CircleListNode();
+						last = nullptr;
+						length--;
+					}
+				}
+				else
+				{
+					CircleListNode<T> *temp = last;
+					while (temp->next != last)
+					{
+						if (temp->next->data == data)
+						{
+							CircleListNode<T> *holder = temp->next->next;
+							temp->next->~CircleListNode();
+							temp->next = holder;
+							length--;
+							break;
+						}
+						temp = temp->next;
+					}
+					if (temp->next == last)
+					{
+						if (temp->next->data == data)
+						{
+							CircleListNode<T> *holder = temp->next->next;
+							temp->next->~CircleListNode();
+							temp->next = holder;
+							last = temp;
+							length--;
+						}
+					}
+				}
+			}
+			else
+			{
+				throw runtime_error("Cannot delete from an empty CircleList.");
+			}
+		}
+		catch (exception e)
+		{
+			cout << e.what() << endl;
+		}
+	}
+	int Length() const { return length; }
+private:
+	CircleListNode<T> *last;
+	int length;
+};
+
+#endif // !CIRCLELIST_H
